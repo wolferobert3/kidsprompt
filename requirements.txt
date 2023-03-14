@@ -1,0 +1,7 @@
+gradio
+matplotlib
+numpy
+PIL
+torch
+transformers
+wordcloud
