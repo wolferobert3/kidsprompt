@@ -1,6 +1,6 @@
+diffusers
 gradio
-matplotlib
-numpy
+openai
 PIL
 torch
 transformers
