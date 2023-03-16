@@ -1,12 +1,21 @@
 import gradio as gr
-from diffusion_model import TextToImageModel
+from PIL import Image
+from dalle_model import TextToImageModel
 
 # Define a text to image model
 model = TextToImageModel()
 
+def generate_image_from_multiple(mood,subject,style):
+
+    prompt = f'Generate an image of {mood} {subject} {style}.'
+    model.generate_and_retrieve_images(prompt, n=1, size="256x256")
+    image = Image.open(f'./{prompt}_0.png')
+
+    return image
+
 with gr.Blocks() as diffusion_demo:
 
-    gr.Markdown('## Stable Diffusion 2 Demo - AI Social Bias Experiment - Predefined Prompts')
+    gr.Markdown('## Image Generation - AI Social Bias - Predefined Prompts')
     
     with gr.Row():
         
@@ -20,6 +29,6 @@ with gr.Blocks() as diffusion_demo:
         
         image = gr.Image(type="numpy", label="Image")
 
-    generate.click(model.generate_image_from_multiple, [mood,subject,style], image)
+    generate.click(generate_image_from_multiple, [mood,subject,style], image)
 
 diffusion_demo.launch(share=True)
