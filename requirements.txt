@@ -1,7 +1,7 @@
 diffusers
 gradio
 openai
-PIL
+pillow
 torch
 transformers
 wordcloud

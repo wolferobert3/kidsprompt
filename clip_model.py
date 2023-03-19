@@ -1,8 +1,25 @@
 import torch
 import time
+import datetime
+import json
 
 from transformers import CLIPModel, AutoTokenizer, AutoProcessor
 from wordcloud import WordCloud
+
+
+# Function for logging session data to a json file
+def log_json(station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile=None):
+
+    date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    write_dict = {'station': station, 'user': user, 'session_ID': session_ID, 'experiment': experiment, 'image_ID': image_ID, 'text_ID': text_ID, 'date_time': date_time}
+    write_dict.update(log_dict)
+
+    if not logfile:
+        logfile = f'logs/{station}_{user}_{session_ID}_{experiment}.log'
+
+    with open(logfile, 'a') as f:
+        f.write(json.dumps(write_dict) + '\n')
+
 
 # Superclass for predicting the similarity between an image and a text based on CLIP similarities
 
@@ -82,6 +99,8 @@ class VLModel:
         with open(self.logfile, 'a') as f:
             f.write(message + '\n')
 
+
+
 # Class for computing the similarity between an image and a text; intended for use with a static image and dynamically changing text classes
 
 class ImageClassifier(VLModel):
@@ -90,31 +109,42 @@ class ImageClassifier(VLModel):
 
         VLModel.__init__(self, model_name)
 
-    def predict(self, image, text_classes, log=True):
+    def predict(self, image, text_classes):
 
         if type(text_classes) == str:
             text_classes = self.split_text_into_classes(text_classes)
 
-        text_classes = [i for i in text_classes if i not in ['',' ','\n']]
+        class_inputs = [i for i in text_classes if i not in ['',' ','\n']]
 
         scaled_image_embeddings = self.get_image_embeddings(image, scale=True)
-        scaled_text_embeddings = self.get_text_embeddings(text_classes, scale=True)
+        scaled_text_embeddings = self.get_text_embeddings(class_inputs, scale=True)
 
         cosine_similarities = torch.matmul(scaled_text_embeddings, scaled_image_embeddings)
         logits_per_image = self.scale_logits(cosine_similarities)
-
-        if log:
-            message = f'Cosine similarities: {cosine_similarities} \nLogits per image: {logits_per_image}'
-            self.write_to_logfile(message)
-
         probs = self.compute_softmax(logits_per_image)
-        dict_probs = self.get_probability_dict(text_classes, probs)
 
-        return dict_probs
+        dict_probs = self.get_probability_dict(class_inputs, probs)
+        dict_logs = self.create_logging_dict(class_inputs, cosine_similarities.tolist(), logits_per_image.tolist(), probs.tolist())
+        
+        return dict_probs, dict_logs
 
     def split_text_into_classes(self, text):
 
         return text.split('\n')
+
+    def create_logging_dict(self, text_classes, cosine_similarities, logits_per_image, probabilities):
+
+        logging_dict = {'text_classes': text_classes, 'cosine_similarities': cosine_similarities, 'logits_per_image': logits_per_image, 'probabilities': probabilities}
+
+        return logging_dict
+
+    def predict_and_log(self, image, text_classes, station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile=None):
+
+        dict_probs, log_dict = self.predict(image, text_classes)
+        log_json(station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile)
+
+        return dict_probs
+
 
 # Class for retrieving the most similar text to an image; intended for use with a dynamically changing image, and static text vocabulary
 
@@ -172,11 +202,3 @@ class TextRetriever(VLModel):
     def set_sleep_time(self, sleep_time):
 
         self.sleep_time = sleep_time
-
-"""
-# Write the probabilities to the log file as json
-def log_probabilities(station, name, cosine_similarities, dict_probs, dict_logits):
-   
-   with open(LOGFILE, 'a') as f:
-      f.write(f'Station:{station}\tName:{name}\tcosine_similarities:' + json.dumps(cosine_similarities) + '\tprobabilities:\t' + json.dumps(dict_probs) + '\tlogits:\t' + json.dumps(dict_logits) + '\n')
-"""
