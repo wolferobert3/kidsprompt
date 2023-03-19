@@ -1,22 +1,28 @@
+# Import libraries
 import gradio as gr
 
-from clip_model import ImageClassifier
+from clip_model import ImageClassifier, log_json
 from os import listdir, path
 
+from utils import upload_file_by_station
+
+# Set image directories for example images and storing new images
+NEW_IMG_DIR = 'user_images'
 IMG_DIR = 'example_images'
-LOGFILE = 'logs/test_log.txt'
+
+# List of example images
+imgs = [img for img in listdir(IMG_DIR) if img not in ['.DS_Store']]
 
 # Define an image classifier
 model = ImageClassifier()
-model.init_logfile(LOGFILE)
 
-# Wrapper to collect text classes and send to model for prediction
-def collect_classes_and_predict(image, text_1, text_2, text_3, text_4, text_5):
-    return model.predict(image, [text_1, text_2, text_3, text_4, text_5])
+# Define a function that takes an image and text classes, logs the state of the UI and model output, and returns the model's predictions
+def collect_classes_and_predict(image, text_1, text_2, text_3, text_4, text_5, station, user, session_ID, experiment, image_ID, textID, logfile=None):
+    
+    dict_probs, log_dict = model.predict(image, [text_1, text_2, text_3, text_4, text_5])
+    log_json(station, user, session_ID, experiment, image_ID, textID, log_dict, logfile)
 
-# Upload a file from your computer
-def upload_file(file_obj):
-    return file_obj.name
+    return dict_probs
 
 # Interface definition and deployment
 with gr.Blocks() as demo:
@@ -32,34 +38,37 @@ with gr.Blocks() as demo:
             # Create upload button
             upload_button = gr.UploadButton("Upload an Image", file_types=["image"], file_count="single")
 
-            ids = gr.Markdown('Identify your station and type your name')
-            station = gr.Dropdown(['iMac1','iMac2','iMac3','iMac4','iMac5'], value='iMac1', label="Station", interactive=True)
-            name = gr.Textbox(label="Name", lines=1, interactive=True)
+            with gr.Accordion(label='Logging Info', open=False):
+
+                station = gr.Dropdown(['iMac1','iMac2','iMac3','iMac4','iMac5'], value='iMac1', label="Station", interactive=True)
+                name = gr.Textbox(label="User Name", lines=1, interactive=True)
+                session = gr.Dropdown(label="Session ID", value='S1', choices=['S1','S2','S3'], interactive=False, visible=False)
+                experiment = gr.Dropdown(label="Experiment ID", value='X1', choices=['X1','X2','X3'], interactive=False, visible=False)
+                image_id = gr.Textbox(label="Image ID", value='monkey.jpg', interactive=False, visible=False)
+                user_image_dir = gr.Textbox(label="User Image Directory", value=NEW_IMG_DIR, interactive=False, visible=False)
 
         with gr.Column():
 
-            class_header = gr.Markdown("Type your classes in the boxes below and click 'Predict!'")
+            class_header = gr.Markdown("Type choices for the model and click 'Predict!'")
 
-            text_1 = gr.Textbox(label="Class 1", lines=1)
-            text_2 = gr.Textbox(label="Class 2", lines=1)
-            text_3 = gr.Textbox(label="Class 3", lines=1)
-            text_4 = gr.Textbox(label="Class 4", lines=1)
-            text_5 = gr.Textbox(label="Class 5", lines=1)
+            text_id = gr.Textbox(label="Image ID", value='user_defined', interactive=False, visible=False)
+            text_1 = gr.Textbox(label="Choice 1", lines=1)
+            text_2 = gr.Textbox(label="Choice 2", lines=1)
+            text_3 = gr.Textbox(label="Choice 3", lines=1)
+            text_4 = gr.Textbox(label="Choice 4", lines=1)
+            text_5 = gr.Textbox(label="Choice 5", lines=1)
 
-            button = gr.Button('Predict!')
-        
-        #text_classes = gr.Textbox(label="Text Classes", interactive=True, lines = 5)
-        outputs = gr.Label(num_top_classes=5, label="Output")
+            submission_button = gr.Button('Predict!')
 
-    # Load in downloaded images to use as examples
-    gr.Examples([path.join(IMG_DIR, img) for img in listdir(IMG_DIR)], image_1)
+        with gr.Column():
+            outputs = gr.Label(num_top_classes=5, label="Output")
 
-    button.click(collect_classes_and_predict, [image_1, text_1, text_2, text_3, text_4, text_5], outputs, show_progress=False)
+            with gr.Accordion(label="Images", open=False):
+                examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in listdir(IMG_DIR) if img not in ['.DS_Store']], [image_1, image_id], None, examples_per_page=3)    
+
+    submission_button.click(collect_classes_and_predict, [image_1, text_1, text_2, text_3, text_4, text_5, station, name, session, experiment, image_id, text_id], outputs, show_progress=False)
 
     # Define image upload button behavior
-    upload_button.upload(upload_file, upload_button, image_1)
-
-    #button.click(model.predict, [station, name, [image_1,text_1,text_2,text_3,text_4,text_5]], outputs, show_progress=False)
-    #text_classes.change(predict, [name,image_1,text_classes], outputs, show_progress=False)
+    upload_button.upload(upload_file_by_station, [upload_button, user_image_dir, station, experiment], [image_1, image_id])
 
 demo.launch(share=True)
