@@ -1,25 +1,10 @@
 import torch
 import time
-import datetime
-import json
 
 from transformers import CLIPModel, AutoTokenizer, AutoProcessor
 from wordcloud import WordCloud
 
-
-# Function for logging session data to a json file
-def log_json(station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile=None):
-
-    date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    write_dict = {'station': station, 'user': user, 'session_ID': session_ID, 'experiment': experiment, 'image_ID': image_ID, 'text_ID': text_ID, 'date_time': date_time}
-    write_dict.update(log_dict)
-
-    if not logfile:
-        logfile = f'logs/{station}_{user}_{session_ID}_{experiment}.log'
-
-    with open(logfile, 'a') as f:
-        f.write(json.dumps(write_dict) + '\n')
-
+from utils import log_json
 
 # Superclass for predicting the similarity between an image and a text based on CLIP similarities
 

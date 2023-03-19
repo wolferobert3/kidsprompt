@@ -1,13 +1,17 @@
+# Import libraries
 import gradio as gr
 
 from clip_model import ImageClassifier, log_json
 from os import listdir, path
 
-# Upload a file from your computer
-def upload_file(file_obj):
-    return file_obj.name, path.split(file_obj.name)[1]
+from utils import upload_file_by_station
 
+# Set image directories for example images and storing new images
+NEW_IMG_DIR = 'user_images'
 IMG_DIR = 'example_images'
+
+# List of example images
+imgs = [img for img in listdir(IMG_DIR) if img not in ['.DS_Store']]
 
 # Define an image classifier
 model = ImageClassifier()
@@ -18,6 +22,7 @@ description_classes = '\n'.join(['a furry animal', 'an animal with claws', 'a do
 feelings_classes = '\n'.join(['happy', 'sad', 'angry', 'nervous', 'amused'])
 colors_classes = '\n'.join(['grey', 'pink', 'black', 'white', 'orange'])
 
+# Define a function that takes an image and text classes, logs the state of the UI and model output, and returns the model's predictions
 def predict_and_log(image, text_classes, station, user, session_ID, experiment, image_ID, textID, logfile=None):
 
     dict_probs, log_dict = model.predict(image, text_classes)
@@ -64,24 +69,25 @@ with gr.Blocks() as demo:
         
         # Use the Label component to visualize the model's predictions
         outputs = gr.Label(num_top_classes=5, label="Output")
-
+    
     with gr.Row():
+        # Create a hidden column to store the logging information
         with gr.Column():
             with gr.Accordion(label='Logging Info', open=False):
                 station = gr.Dropdown(['iMac1','iMac2','iMac3','iMac4','iMac5'], value='iMac1', label="Station", interactive=True)
                 name = gr.Textbox(label="User Name", lines=1, interactive=True)
-                session = gr.Dropdown(label="Session ID", value='S1', choices=['S1','S2','S3'], interactive=True, visible=False)
-                experiment = gr.Dropdown(label="Experiment ID", value='X1', choices=['X1','X2','X3'], interactive=True, visible=False)
-                image_id = gr.Textbox(label="Image ID", value='monkey.jpg', interactive=True, visible=False)
-                log_file = gr.Textbox(label="Log File", interactive=True, visible=False)
+                session = gr.Dropdown(label="Session ID", value='S1', choices=['S1','S2','S3'], interactive=False, visible=False)
+                experiment = gr.Dropdown(label="Experiment ID", value='X1', choices=['X1','X2','X3'], interactive=False, visible=False)
+                image_id = gr.Textbox(label="Image ID", value='monkey.jpg', interactive=False, visible=False)
+                user_image_dir = gr.Textbox(label="User Image Directory", value=NEW_IMG_DIR, interactive=False, visible=False)
 
         with gr.Column():
-            # Load in downloaded images to use as examples
+            # Load in images to use as examples
             with gr.Accordion(label="Images", open=False):
                 examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in listdir(IMG_DIR) if img not in ['.DS_Store']], [image_1, image_id], None, examples_per_page=2)    
 
     # Define image upload button behavior
-    upload_button.upload(upload_file, upload_button, [image_1, image_id])
+    upload_button.upload(upload_file_by_station, [upload_button, user_image_dir, station, experiment], [image_1, image_id])
 
     # Run the classification function when the classify button is clicked - corresponds to each tab defined above
     submission_animals.click(predict_and_log, [image_1, text_classes_animals, station, name, session, experiment, image_id, text_id_animal], outputs)
