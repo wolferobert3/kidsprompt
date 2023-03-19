@@ -3,6 +3,7 @@ import time
 
 from transformers import CLIPModel, AutoTokenizer, AutoProcessor
 from wordcloud import WordCloud
+from os import path
 
 from utils import log_json
 
@@ -135,11 +136,12 @@ class ImageClassifier(VLModel):
 
 class TextRetriever(VLModel):
 
-    def __init__(self, vocabulary, model_name='openai/clip-vit-base-patch32'):
+    def __init__(self, vocabulary, model_name='openai/clip-vit-base-patch32', regularization_dict={}):
 
         VLModel.__init__(self, model_name)
 
         self.vocab = vocabulary
+        self.regularization_dict = regularization_dict
         with torch.no_grad():
             self.scaled_reference_text_embeddings = self.get_text_embeddings(self.vocab, scale=True)
         self.k = 10
@@ -153,9 +155,28 @@ class TextRetriever(VLModel):
 
         return cosine_similarities
 
-    def return_top_k_words(self, image):
+    def save_cosine_similarities(self, cosine_similarities, save_dir):
+            
+            torch.save(cosine_similarities, path.join(save_dir, 'cosine_similarities.t'))
+
+    def regularize_cosine_similarities(self, cosine_similarities, regularizers):
+
+        for regularizer in regularizers:
+
+            regularization_vector = self.regularization_dict[regularizer]
+
+            with torch.no_grad():
+                cosine_similarities = cosine_similarities * regularization_vector
+
+        return cosine_similarities
+
+    def return_top_k_words(self, image, regularizers=None):
 
         similarities = self.get_cosine_similarities(image)
+
+        if regularizers:
+            similarities = self.regularize_cosine_similarities(similarities, regularizers)
+
         top_k = similarities.topk(self.k, dim=0).indices.numpy()
 
         top_k_words = [self.vocab[i] for i in top_k]
@@ -187,3 +208,7 @@ class TextRetriever(VLModel):
     def set_sleep_time(self, sleep_time):
 
         self.sleep_time = sleep_time
+
+    def set_regularization_dict(self, regularization_dict):
+
+        self.regularization_dict.update(regularization_dict)
