@@ -5,13 +5,14 @@ import gradio as gr
 import pandas as pd
 
 from clip_model import TextRetriever
-from utils import log_json_text_retrieval, save_similarity_tensor, save_regularized_tensor
+from utils import log_json_text_retrieval, save_similarity_tensor, save_regularized_tensor, save_log_image
 
 # Define parameters
-LOGFILE = 'logs/test_log.txt'
 VOCAB_FILE = 'word_lexica/NRC-VAD-Lexicon.txt'
 IMAGE_ID = 'webcam_stream'
 TENSOR_DIR = 'tensors'
+WORDCLOUD_DIR = 'word_clouds'
+WEBCAM_DIR = 'webcam_images'
 K_VALUE = 10
 
 # Load in ANEW data
@@ -30,7 +31,6 @@ model = TextRetriever(vocab, regularization_dict=regularization_dict)
 
 # Set model parameters
 model.set_k_value(K_VALUE)
-model.init_logfile(LOGFILE)
 
 def compute_word_cloud_and_log(image, regularizers, station, user, session_ID, experiment, image_ID, text_ID, logfile=None):
 
@@ -46,6 +46,8 @@ def compute_word_cloud_and_log(image, regularizers, station, user, session_ID, e
     word_cloud = model.compute_word_cloud(top_words, top_weights)
 
     log_json_text_retrieval(station, user, session_ID, experiment, image_ID, text_ID, top_words, top_weights, logfile, date_time)
+    save_log_image(word_cloud, station, experiment, date_time, WORDCLOUD_DIR)
+    save_log_image(image, station, experiment, date_time, WEBCAM_DIR, fromarray=True)
 
     return word_cloud
 

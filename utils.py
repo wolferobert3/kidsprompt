@@ -33,6 +33,7 @@ def log_json_text_retrieval(station, user, session_ID, experiment, image_ID, tex
         f.write(json.dumps(write_dict) + '\n')
 
 def save_similarity_tensor(prob_tensor, station, experiment, date_time, tensor_dir):
+
     child_dir = path.join(tensor_dir, f'{station}_{experiment}')
 
     if not path.exists(child_dir):
@@ -43,6 +44,7 @@ def save_similarity_tensor(prob_tensor, station, experiment, date_time, tensor_d
     torch.save(prob_tensor, save_file)
 
 def save_regularized_tensor(prob_tensor, station, experiment, date_time, tensor_dir, regularizer):
+
     child_dir = path.join(tensor_dir, f'{station}_{experiment}_{regularizer}')
 
     if not path.exists(child_dir):
@@ -51,6 +53,21 @@ def save_regularized_tensor(prob_tensor, station, experiment, date_time, tensor_
     save_file = path.join(child_dir, f'{date_time}.pt')
 
     torch.save(prob_tensor, save_file)
+
+def save_log_image(image_, station, experiment, date_time, save_dir, fromarray=False):
+
+    child_dir = path.join(save_dir, f'{station}_{experiment}')
+
+    if not path.exists(child_dir):
+        mkdir(child_dir)
+
+    save_file = path.join(child_dir, f'{date_time}.png')
+    
+    if fromarray:
+        Image.fromarray(image_).save(save_file, 'PNG')
+        return
+    
+    image_.save(save_file)
 
 # Define a function that saves an image uploaded by the user
 def save_novel_image(image_file, image_ID, img_dir):

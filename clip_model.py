@@ -175,8 +175,8 @@ class TextRetriever(VLModel):
         top_k_words = [self.vocab[i] for i in top_k]
         top_k_weights = [float(similarities[i].numpy()) for i in top_k]
 
-        message = f'Top {self.k} words: {top_k_words} \nTop {self.k} weights: {top_k_weights}'
-        self.write_to_logfile(message)
+        #message = f'Top {self.k} words: {top_k_words} \nTop {self.k} weights: {top_k_weights}'
+        #self.write_to_logfile(message)
 
         return top_k_words, top_k_weights
 
