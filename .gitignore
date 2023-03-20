@@ -5,3 +5,5 @@ dalle_images/*
 logs/*
 user_images/*
 tensors/*
+word_clouds/*
+webcam_images/*
