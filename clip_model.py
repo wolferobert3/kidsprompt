@@ -159,23 +159,16 @@ class TextRetriever(VLModel):
             
             torch.save(cosine_similarities, path.join(save_dir, 'cosine_similarities.t'))
 
-    def regularize_cosine_similarities(self, cosine_similarities, regularizers):
+    def regularize_cosine_similarities(self, cosine_similarities, regularizer):
 
-        for regularizer in regularizers:
+        regularization_vector = self.regularization_dict[regularizer]
 
-            regularization_vector = self.regularization_dict[regularizer]
-
-            with torch.no_grad():
-                cosine_similarities = cosine_similarities * regularization_vector
+        with torch.no_grad():
+            cosine_similarities = cosine_similarities * regularization_vector
 
         return cosine_similarities
 
-    def return_top_k_words(self, image, regularizers=None):
-
-        similarities = self.get_cosine_similarities(image)
-
-        if regularizers:
-            similarities = self.regularize_cosine_similarities(similarities, regularizers)
+    def return_top_k_words(self, similarities):
 
         top_k = similarities.topk(self.k, dim=0).indices.numpy()
 
@@ -188,9 +181,7 @@ class TextRetriever(VLModel):
         return top_k_words, top_k_weights
 
     # Word cloud function with weights
-    def compute_word_cloud(self, image):
-
-        text, weights = self.return_top_k_words(image)
+    def compute_word_cloud(self, text, weights):
     
         # Create a word cloud
         wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="Dark2", max_font_size=150, random_state=42)
@@ -198,8 +189,16 @@ class TextRetriever(VLModel):
 
         time.sleep(self.sleep_time)
 
-        image = wordcloud.to_image()
-        return image
+        return wordcloud.to_image()
+
+    def compute_word_cloud_from_image(self, image, regularizers=[]):
+            
+            cosine_similarities = self.get_cosine_similarities(image)
+            cosine_similarities = self.regularize_cosine_similarities(cosine_similarities, regularizers)
+            top_k_words, top_k_weights = self.return_top_k_words(cosine_similarities)
+            word_cloud = self.compute_word_cloud(top_k_words, top_k_weights)
+    
+            return word_cloud
 
     def set_k_value(self, k):
 

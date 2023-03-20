@@ -4,3 +4,4 @@ oai_key.txt
 dalle_images/*
 logs/*
 user_images/*
+tensors/*

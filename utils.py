@@ -1,3 +1,4 @@
+import torch
 import datetime
 import json
 
@@ -12,10 +13,44 @@ def log_json(station, user, session_ID, experiment, image_ID, text_ID, log_dict,
     write_dict.update(log_dict)
 
     if not logfile:
-        logfile = f'logs/{station}_{user}_{session_ID}_{experiment}.log'
+        logfile = path.join(f'logs', f'{station}_{user}_{session_ID}_{experiment}.log')
 
     with open(logfile, 'a') as f:
         f.write(json.dumps(write_dict) + '\n')
+
+# Function for logging session data to a json file
+def log_json_text_retrieval(station, user, session_ID, experiment, image_ID, text_ID, top_words, top_weights, logfile=None, date_time=None):
+
+    if not date_time:
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    write_dict = {'station': station, 'user': user, 'session_ID': session_ID, 'experiment': experiment, 'image_ID': image_ID, 'text_ID': text_ID, 'date_time': date_time, 'top_words': top_words, 'top_weights': top_weights}
+
+    if not logfile:
+        logfile = path.join(f'logs', f'{station}_{user}_{session_ID}_{experiment}.log')
+
+    with open(logfile, 'a') as f:
+        f.write(json.dumps(write_dict) + '\n')
+
+def save_similarity_tensor(prob_tensor, station, experiment, date_time, tensor_dir):
+    child_dir = path.join(tensor_dir, f'{station}_{experiment}')
+
+    if not path.exists(child_dir):
+        mkdir(child_dir)
+
+    save_file = path.join(child_dir, f'{date_time}.pt')        
+
+    torch.save(prob_tensor, save_file)
+
+def save_regularized_tensor(prob_tensor, station, experiment, date_time, tensor_dir, regularizer):
+    child_dir = path.join(tensor_dir, f'{station}_{experiment}_{regularizer}')
+
+    if not path.exists(child_dir):
+        mkdir(child_dir)
+
+    save_file = path.join(child_dir, f'{date_time}.pt')
+
+    torch.save(prob_tensor, save_file)
 
 # Define a function that saves an image uploaded by the user
 def save_novel_image(image_file, image_ID, img_dir):
