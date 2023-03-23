@@ -1,10 +1,15 @@
 import gradio as gr
 
+from os import path, listdir
+
 from clip_model import ImageClassifier
 
 # Define parameters
-IMG_DIR = 'example_images'
+IMG_DIR = 'example_images/pets'
 LOGFILE = 'logs/test_log.txt'
+
+# List of example images
+imgs = sorted([img for img in listdir(IMG_DIR) if img not in ['.DS_Store']], key=lambda x: int(x.split('.')[0]))
 
 # Define an image classifier
 model = ImageClassifier()
@@ -34,12 +39,17 @@ with gr.Blocks() as demo:
         with gr.Row():
 
             with gr.Column():
-                image_1 = gr.Image(source='webcam', streaming=True)
+                #image_1 = gr.Image(source='webcam', streaming=True)
+                image_1 = gr.Image(path.join(IMG_DIR, imgs[0]), label="Image")
+                image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
                 submission_button = gr.Button(value="Check Admission")
 
             outputs = gr.Label(num_top_classes=3, label="Output")
             output_image = gr.Image(label="Output", value='admission_images/background_starting.jpg')
 
         submission_button.click(monster_wrapper, image_1, [outputs, output_image])
-        
+
+        with gr.Accordion(label="Images", open=False):
+            examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in imgs], [image_1, image_id], None, examples_per_page=3)    
+
 demo.launch(share=True)

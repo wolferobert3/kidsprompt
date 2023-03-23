@@ -11,7 +11,7 @@ NEW_IMG_DIR = 'user_images'
 IMG_DIR = 'example_images/boundary'
 
 # List of example images
-imgs = [img for img in listdir(IMG_DIR) if img not in ['.DS_Store']]
+imgs = sorted([img for img in listdir(IMG_DIR) if img not in ['.DS_Store']], key=lambda x: int(x.split('.')[0]))
 
 # Define an image classifier
 model = ImageClassifier()
@@ -41,7 +41,7 @@ with gr.Blocks() as demo:
 
         with gr.Column():
             # Set default image to monkey
-            image_1 = gr.Image(path.join(IMG_DIR, '1.jpg'), label="Image")
+            image_1 = gr.Image(path.join(IMG_DIR, imgs[0]), label="Image")
 
             # Create upload button
             upload_button = gr.UploadButton("Upload an Image", file_types=["image"], file_count="single")
@@ -78,13 +78,13 @@ with gr.Blocks() as demo:
                 name = gr.Textbox(label="User Name", lines=1, interactive=True)
                 session = gr.Dropdown(label="Session ID", value='S1', choices=['S1','S2','S3'], interactive=False, visible=False)
                 experiment = gr.Dropdown(label="Experiment ID", value='X1', choices=['X1','X2','X3'], interactive=False, visible=False)
-                image_id = gr.Textbox(label="Image ID", value='1.jpg', interactive=False, visible=False)
+                image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
                 user_image_dir = gr.Textbox(label="User Image Directory", value=NEW_IMG_DIR, interactive=False, visible=False)
 
         with gr.Column():
             # Load in images to use as examples
             with gr.Accordion(label="Images", open=False):
-                examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in listdir(IMG_DIR) if img not in ['.DS_Store']], [image_1, image_id], None, examples_per_page=2)    
+                examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in imgs], [image_1, image_id], None, examples_per_page=2)    
 
     # Define image upload button behavior
     upload_button.upload(upload_file_by_station, [upload_button, user_image_dir, station, experiment], [image_1, image_id])
