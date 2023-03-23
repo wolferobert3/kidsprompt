@@ -1,9 +1,12 @@
 import torch
 import time
 
+import numpy as np
+
 from transformers import CLIPModel, AutoTokenizer, AutoProcessor
 from wordcloud import WordCloud
 from os import path
+from PIL import Image
 
 from utils import log_json
 
@@ -11,14 +14,14 @@ from utils import log_json
 
 class VLModel:
    
-    def __init__(self, model_name='openai/clip-vit-base-patch32'):
+    def __init__(self, model_name: str ='openai/clip-vit-base-patch32') -> None:
 
         self.model = CLIPModel.from_pretrained(model_name)
         self.logit_scale = self.model.logit_scale.exp()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.processor = AutoProcessor.from_pretrained(model_name)
     
-    def get_text_embeddings(self, text, scale=False):
+    def get_text_embeddings(self, text: str, scale: bool = False) -> torch.Tensor:
 
         with torch.no_grad():
 
@@ -30,7 +33,7 @@ class VLModel:
 
         return embeddings
   
-    def get_image_embeddings(self, images, scale=False):
+    def get_image_embeddings(self, images: list, scale: bool = False) -> torch.Tensor:
         
         with torch.no_grad():
 
@@ -42,60 +45,59 @@ class VLModel:
 
         return embeddings
 
-    def scale_image_embeddings(self, image_embeddings):
+    def scale_image_embeddings(self, image_embeddings: torch.Tensor) -> torch.Tensor:
 
         scaled_image_embeddings = image_embeddings / image_embeddings.norm(p=2, dim=-1, keepdim=True)
 
         return scaled_image_embeddings
 
-    def scale_text_embeddings(self, text_embeddings):
+    def scale_text_embeddings(self, text_embeddings: torch.Tensor) -> torch.Tensor:
 
         scaled_text_embeddings = text_embeddings / text_embeddings.norm(p=2, dim=-1, keepdim=True)
 
         return scaled_text_embeddings
 
-    def scale_logits(self, logits):
+    def scale_logits(self, logits: torch.Tensor) -> torch.Tensor:
 
         with torch.no_grad():
             scaled_logits = logits * self.logit_scale
 
         return scaled_logits
 
-    def compute_softmax(self, logits):
+    def compute_softmax(self, logits: torch.Tensor) -> torch.Tensor:
 
         return logits.softmax(dim=0)
 
-    def set_logit_scale(self, logit_scale):
+    def set_logit_scale(self, logit_scale: float) -> None:
 
         self.logit_scale = logit_scale
 
-    def get_probability_dict(self, classes, probs):
+    def get_probability_dict(self, classes: list, probs: list) -> dict:
 
         return {classes[i]: float(probs[i]) for i in range(len(probs))}
 
-    def init_logfile(self, logfile):
+    def init_logfile(self, logfile: str) -> None:
 
         self.logfile = logfile
 
         with open(self.logfile, 'w') as f:
             f.write('Initiliazing logfile \n')
 
-    def write_to_logfile(self, message):
+    def write_to_logfile(self, message: str) -> None:
 
         with open(self.logfile, 'a') as f:
             f.write(message + '\n')
-
 
 
 # Class for computing the similarity between an image and a text; intended for use with a static image and dynamically changing text classes
 
 class ImageClassifier(VLModel):
 
-    def __init__(self, model_name='openai/clip-vit-base-patch32'):
+    def __init__(self, model_name: str = 'openai/clip-vit-base-patch32') -> None:
 
         VLModel.__init__(self, model_name)
 
-    def predict(self, image, text_classes):
+    def predict(self, image: np.array, text_classes: str or list) -> dict:
 
         if type(text_classes) == str:
             text_classes = self.split_text_into_classes(text_classes)
@@ -114,17 +116,17 @@ class ImageClassifier(VLModel):
         
         return dict_probs, dict_logs
 
-    def split_text_into_classes(self, text):
+    def split_text_into_classes(self, text: str) -> list:
 
         return text.split('\n')
 
-    def create_logging_dict(self, text_classes, cosine_similarities, logits_per_image, probabilities):
+    def create_logging_dict(self, text_classes: list, cosine_similarities: list, logits_per_image: list, probabilities: list) -> dict:
 
         logging_dict = {'text_classes': text_classes, 'cosine_similarities': cosine_similarities, 'logits_per_image': logits_per_image, 'probabilities': probabilities}
 
         return logging_dict
 
-    def predict_and_log(self, image, text_classes, station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile=None):
+    def predict_and_log(self, image: np.array, text_classes: list, station: str, user: str, session_ID: str, experiment: str, image_ID: str, text_ID: str, log_dict: dict, logfile: str = None) -> dict:
 
         dict_probs, log_dict = self.predict(image, text_classes)
         log_json(station, user, session_ID, experiment, image_ID, text_ID, log_dict, logfile)
@@ -136,7 +138,7 @@ class ImageClassifier(VLModel):
 
 class TextRetriever(VLModel):
 
-    def __init__(self, vocabulary, model_name='openai/clip-vit-base-patch32', regularization_dict={}):
+    def __init__(self, vocabulary: list, model_name: str = 'openai/clip-vit-base-patch32', regularization_dict: dict = {}) -> None:
 
         VLModel.__init__(self, model_name)
 
@@ -147,7 +149,7 @@ class TextRetriever(VLModel):
         self.k = 10
         self.sleep_time = 2
 
-    def get_cosine_similarities(self, image):
+    def get_cosine_similarities(self, image: np.array) -> torch.Tensor:
 
         with torch.no_grad():
             scaled_image_embeddings = self.get_image_embeddings(image, scale=True)
@@ -155,11 +157,11 @@ class TextRetriever(VLModel):
 
         return cosine_similarities
 
-    def save_cosine_similarities(self, cosine_similarities, save_dir):
+    def save_cosine_similarities(self, cosine_similarities: torch.Tensor, save_dir: str) -> None:
             
             torch.save(cosine_similarities, path.join(save_dir, 'cosine_similarities.t'))
 
-    def regularize_cosine_similarities(self, cosine_similarities, regularizer):
+    def regularize_cosine_similarities(self, cosine_similarities: torch.Tensor, regularizer: str) -> torch.Tensor:
 
         regularization_vector = self.regularization_dict[regularizer]
 
@@ -168,7 +170,7 @@ class TextRetriever(VLModel):
 
         return cosine_similarities
 
-    def return_top_k_words(self, similarities):
+    def return_top_k_words(self, similarities: torch.Tensor) -> tuple:
 
         top_k = similarities.topk(self.k, dim=0).indices.numpy()
 
@@ -181,7 +183,7 @@ class TextRetriever(VLModel):
         return top_k_words, top_k_weights
 
     # Word cloud function with weights
-    def compute_word_cloud(self, text, weights):
+    def compute_word_cloud(self, text: list, weights: list) -> Image.Image:
     
         # Create a word cloud
         wordcloud = WordCloud(width=800, height=400, background_color="white", colormap="Dark2", max_font_size=150, random_state=42)
@@ -191,7 +193,7 @@ class TextRetriever(VLModel):
 
         return wordcloud.to_image()
 
-    def compute_word_cloud_from_image(self, image, regularizers=[]):
+    def compute_word_cloud_from_image(self, image: np.array, regularizers: list = []) -> Image.Image:
             
             cosine_similarities = self.get_cosine_similarities(image)
             cosine_similarities = self.regularize_cosine_similarities(cosine_similarities, regularizers)
@@ -200,14 +202,14 @@ class TextRetriever(VLModel):
     
             return word_cloud
 
-    def set_k_value(self, k):
+    def set_k_value(self, k: int) -> None:
 
         self.k = k
 
-    def set_sleep_time(self, sleep_time):
+    def set_sleep_time(self, sleep_time: int) -> None:
 
         self.sleep_time = sleep_time
 
-    def set_regularization_dict(self, regularization_dict):
+    def set_regularization_dict(self, regularization_dict: dict) -> None:
 
         self.regularization_dict.update(regularization_dict)
