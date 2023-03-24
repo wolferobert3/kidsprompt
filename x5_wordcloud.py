@@ -16,7 +16,7 @@ WEBCAM_DIR = 'webcam_images'
 K_VALUE = 10
 
 # Load in ANEW data
-nrc_vad = pd.read_csv(VOCAB_FILE, sep='\t', header=None, names=['term', 'pleasure', 'arousal', 'dominance'], na_filter=False)
+nrc_vad = pd.read_csv(VOCAB_FILE, sep='\t', header=None, names=['term', 'pleasure', 'arousal', 'dominance'], na_filter=False, nrows=1024)
 vocab = [word.strip() for word in nrc_vad['term'].tolist() if word]
 
 # Define regularization vectors

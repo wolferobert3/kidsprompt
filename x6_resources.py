@@ -28,14 +28,12 @@ def collect_classes_and_predict(image, positive_text, negative_text, decision_bo
 
     dict_probs, log_dict = model.predict(image, text_classes)
 
-    if dict_probs [positive_text] > decision_boundary:
+    if dict_probs[positive_text]*100 > decision_boundary:
         output_image = IMAGE_DICT[class_map[positive_text]]
     else:
         output_image = IMAGE_DICT[class_map[negative_text]]
 
     log_json_resources(station, user, session_ID, experiment, image_ID, textID, log_dict, decision_boundary, logfile)
-
-    print(dict_probs)
 
     return dict_probs, output_image
 
