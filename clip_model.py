@@ -8,6 +8,12 @@ from wordcloud import WordCloud
 from os import path
 from PIL import Image
 
+from EmojiCloud.plot import plot_dense_emoji_cloud
+from EmojiCloud.emoji import EmojiManager
+from EmojiCloud.canvas import EllipseCanvas, RectangleCanvas
+from EmojiCloud.vendors import TWITTER
+
+from emoji_vocab import EmojiVocab, GestureVocab
 from utils import log_json
 
 # Superclass for predicting the similarity between an image and a text based on CLIP similarities
@@ -213,3 +219,67 @@ class TextRetriever(VLModel):
     def set_regularization_dict(self, regularization_dict: dict) -> None:
 
         self.regularization_dict.update(regularization_dict)
+
+class EmojiRetriever(TextRetriever):
+    
+    def __init__(self, vocabulary: list = EmojiVocab.vocab, model_name: str = 'openai/clip-vit-base-patch32', regularization_dict: dict = {}, emoji_dict: dict = EmojiVocab.emoji_dict_unicode) -> None:
+
+        TextRetriever.__init__(self, vocabulary, model_name, regularization_dict)
+        self.emoji_dict = emoji_dict
+        self.canvas_width = 24*10
+        self.canvas_height = 24*4
+
+    # Word cloud function with weights
+    def compute_emoji_cloud(self, text: list, weights: list) -> Image.Image:
+    
+        text = [self.emoji_dict[word].replace('\\U000','') for word in text]
+        dict_weight = dict(zip(text, weights))
+        emoji_list = EmojiManager.create_list_from_single_vendor(dict_weight, TWITTER)
+        canvas = RectangleCanvas(self.canvas_width, self.canvas_height)
+
+        return plot_dense_emoji_cloud(canvas, emoji_list)
+
+    def compute_emoji_cloud_from_image(self, image: np.array, regularizers: list = []) -> Image.Image:
+            
+        cosine_similarities = self.get_cosine_similarities(image)
+        cosine_similarities = self.regularize_cosine_similarities(cosine_similarities, regularizers)
+        top_k_words, top_k_weights = self.return_top_k_words(cosine_similarities)
+        top_k_emojis = [self.emoji_dict[word] for word in top_k_words]
+        emoji_cloud = self.compute_emoji_cloud(top_k_emojis, top_k_weights)
+
+        return emoji_cloud
+    
+    def set_canvas_size(self, width: int, height: int) -> None:
+
+        self.canvas_width = width
+        self.canvas_height = height
+
+
+class GestureRetriever(TextRetriever):
+    
+    def __init__(self, vocabulary: list = GestureVocab.vocab, model_name: str = 'openai/clip-vit-base-patch32', regularization_dict: dict = {}, gesture_dict: dict = GestureVocab.gesture_dict_unicode) -> None:
+
+        TextRetriever.__init__(self, vocabulary, model_name, regularization_dict)
+        self.gesture_dict = gesture_dict
+        self.canvas_width = 24*10
+        self.canvas_height = 24*4
+
+    # Word cloud function with weights
+    def compute_gesture_cloud(self, text: list, weights: list) -> Image.Image:
+    
+        text = [self.gesture_dict[word].replace('\\U000','') for word in text]
+        dict_weight = dict(zip(text, weights))
+        emoji_list = EmojiManager.create_list_from_single_vendor(dict_weight, TWITTER)
+        canvas = RectangleCanvas(self.canvas_width, self.canvas_height)
+
+        return plot_dense_emoji_cloud(canvas, emoji_list)
+
+    def compute_gesture_cloud_from_image(self, image: np.array, regularizers: list = []) -> Image.Image:
+            
+        cosine_similarities = self.get_cosine_similarities(image)
+        cosine_similarities = self.regularize_cosine_similarities(cosine_similarities, regularizers)
+        top_k_words, top_k_weights = self.return_top_k_words(cosine_similarities)
+        top_k_gestures = [self.gesture_dict[word] for word in top_k_words]
+        gesture_cloud = self.compute_gesture_cloud(top_k_gestures, top_k_weights)
+
+        return gesture_cloud
