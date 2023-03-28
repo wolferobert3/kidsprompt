@@ -49,7 +49,7 @@ with gr.Blocks() as demo:
 
         with gr.Column():
 
-            class_header = gr.Markdown("Type five different ways to describe what you see in the pictures and click 'Predict'")
+            class_header = gr.Markdown("Use 1-3 words to describe what you see in the pictures and click 'Predict'")
 
             text_id = gr.Textbox(label="Image ID", value='user_defined', interactive=False, visible=False)
             text_1 = gr.Textbox(label="Description 1", lines=1)
