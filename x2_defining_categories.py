@@ -27,7 +27,7 @@ def collect_classes_and_predict(image, text_1, text_2, text_3, text_4, text_5, s
 # Interface definition and deployment
 with gr.Blocks() as demo:
 
-    header = gr.Markdown("## CLIP Experiment 2 - Defining Categories")
+    header = gr.Markdown("## UW Kids Team - Defining Categories")
 
     with gr.Row():
 
@@ -49,14 +49,14 @@ with gr.Blocks() as demo:
 
         with gr.Column():
 
-            class_header = gr.Markdown("Type choices for the model and click 'Predict!'")
+            class_header = gr.Markdown("Type five different ways to describe what you see in the pictures and click 'Predict'")
 
             text_id = gr.Textbox(label="Image ID", value='user_defined', interactive=False, visible=False)
-            text_1 = gr.Textbox(label="Choice 1", lines=1)
-            text_2 = gr.Textbox(label="Choice 2", lines=1)
-            text_3 = gr.Textbox(label="Choice 3", lines=1)
-            text_4 = gr.Textbox(label="Choice 4", lines=1)
-            text_5 = gr.Textbox(label="Choice 5", lines=1)
+            text_1 = gr.Textbox(label="Description 1", lines=1)
+            text_2 = gr.Textbox(label="Description 2", lines=1)
+            text_3 = gr.Textbox(label="Description 3", lines=1)
+            text_4 = gr.Textbox(label="Description 4", lines=1)
+            text_5 = gr.Textbox(label="Description 5", lines=1)
 
             submission_button = gr.Button('Predict!')
 

@@ -40,9 +40,9 @@ def collect_classes_and_predict(image, positive_text, negative_text, decision_bo
 # Interface definition and deployment
 with gr.Blocks() as demo:
 
-    admit = gr.Markdown('### Buddy and Luna\'s Dog Door')
+    admit = gr.Markdown('### UW Kids Team: Designing Buddy\'s Smart Door')
 
-    with gr.Accordion(label="Dog Door", open=False):
+    with gr.Accordion(label="Smart Door Camera", open=False):
 
         with gr.Row():
 
@@ -52,8 +52,8 @@ with gr.Blocks() as demo:
                 upload_button = gr.UploadButton("Upload an Image", file_types=["image"], file_count="single")
                 image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
 
-                positive_text = gr.Textbox(label="Positive Class", value="dog", interactive=True, visible=True)
-                negative_text = gr.Textbox(label="Negative Class", value="not a dog", interactive=True, visible=True)
+                positive_text = gr.Textbox(label="Describe Buddy's Friend Group", interactive=True, visible=True)
+                negative_text = gr.Textbox(label="Describe Animals Outside of Buddy's Friend Group", interactive=True, visible=True)
                 text_id = gr.Textbox(label="Image ID", value='user_defined', interactive=False, visible=False)
 
                 submission_button = gr.Button(value="Check Admission")
@@ -70,6 +70,7 @@ with gr.Blocks() as demo:
             with gr.Column():
 
                 outputs = gr.Label(num_top_classes=3, label="Output")
+                slider_instructions = gr.Markdown('Use the slider to choose the point at which the smart door should open.')
                 decision_boundary = gr.Slider(0, 100, 50, step=10, label='Decision Boundary')
 
             with gr.Column():

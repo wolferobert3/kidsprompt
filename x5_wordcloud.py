@@ -8,7 +8,7 @@ from clip_model import TextRetriever, EmojiRetriever, GestureRetriever
 from utils import log_json_text_retrieval, save_similarity_tensor, save_regularized_tensor, save_log_image
 
 # Define parameters
-VOCAB_FILE = 'word_lexica/NRC-VAD-Lexicon.txt'
+VOCAB_FILE = 'word_lexica/Wordlist_Kidsteam.csv'
 IMAGE_ID = 'webcam_stream'
 TENSOR_DIR = 'tensors'
 WORDCLOUD_DIR = 'word_clouds'
@@ -16,12 +16,15 @@ WEBCAM_DIR = 'webcam_images'
 K_VALUE = 10
 
 # Load in ANEW data
-nrc_vad = pd.read_csv(VOCAB_FILE, sep='\t', header=None, names=['term', 'pleasure', 'arousal', 'dominance'], na_filter=False, nrows=1024)
-vocab = [word.strip() for word in nrc_vad['term'].tolist() if word]
+#nrc_vad = pd.read_csv(VOCAB_FILE, sep='\t', header=None, names=['term', 'pleasure', 'arousal', 'dominance'], na_filter=False, nrows=1024)
+#vocab = [word.strip() for word in nrc_vad['term'].tolist() if word]
+
+words = pd.read_csv(VOCAB_FILE)
+vocab = [word.strip() for word in words['term'].tolist() if word]
 
 # Define regularization vectors
-pleasantness = torch.tensor(nrc_vad['pleasure'])
-inverse_arousal = torch.tensor(1-nrc_vad['arousal'])
+pleasantness = torch.tensor(words['pleasure'])
+inverse_arousal = torch.tensor(1-words['arousal'])
 
 # Define regularization dictionary
 regularization_dict = {'pleasantness': pleasantness, 'inverse_arousal': inverse_arousal}
@@ -78,7 +81,7 @@ with gr.Blocks() as demo:
 
                 station = gr.Dropdown(['iMac1','iMac2','iMac3','iMac4','iMac5'], value='iMac1', label="Station", interactive=True)
                 name = gr.Textbox(label="User Name", lines=1, interactive=True)
-                regularizers = gr.CheckboxGroup(choices=['pleasantness', 'inverse_arousal'], label="Regularizers", interactive=True, value=None)
+                regularizers = gr.CheckboxGroup(choices=['pleasantness', 'inverse_arousal'], label="Regularizers", interactive=True, visible=False, value=None)
                 model_type = gr.Radio(choices=['text', 'emoji', 'gesture'], label="Model Type", interactive=True, value='text')
                 session = gr.Dropdown(label="Session ID", value='S3', choices=['S1','S2','S3'], interactive=False, visible=False)
                 experiment = gr.Dropdown(label="Experiment ID", value='X3', choices=['X1','X2','X3'], interactive=False, visible=False)
