@@ -23,6 +23,9 @@ IMAGE_DICT = {'positive': 'admission_images/door_open.jpg', 'negative': 'admissi
 
 def collect_classes_and_predict(image, positive_text, negative_text, decision_boundary, station, user, session_ID, experiment, image_ID, textID, logfile=None):
     
+    if not positive_text or not negative_text:
+        return None, f'admission_images/background_starting.jpg'
+
     class_map = {positive_text: 'positive', negative_text: 'negative'}
     text_classes = [positive_text, negative_text]
 
@@ -71,7 +74,7 @@ with gr.Blocks() as demo:
 
                 outputs = gr.Label(num_top_classes=3, label="Output")
                 slider_instructions = gr.Markdown('Use the slider to choose the point at which the smart door should open.')
-                decision_boundary = gr.Slider(0, 100, 50, step=10, label='Decision Boundary')
+                decision_boundary = gr.Slider(0, 100, 50, step=10, label='Decision Slider', interactive=True, visible=True)
 
             with gr.Column():
 
