@@ -47,11 +47,11 @@ def compute_word_cloud_and_log(image, regularizers, station, user, session_ID, e
 
     date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cosine_similarities = current_model.get_cosine_similarities(image)
-    save_similarity_tensor(cosine_similarities, station, experiment, date_time, TENSOR_DIR)
+    #save_similarity_tensor(cosine_similarities, station, experiment, date_time, TENSOR_DIR)
 
     for regularizer in regularizers:
         cosine_similarities = current_model.regularize_cosine_similarities(cosine_similarities, regularizer)
-        save_regularized_tensor(cosine_similarities, station, experiment, date_time, TENSOR_DIR, regularizer)
+        #save_regularized_tensor(cosine_similarities, station, experiment, date_time, TENSOR_DIR, regularizer)
 
     top_words, top_weights = current_model.return_top_k_words(cosine_similarities)
 
@@ -62,9 +62,9 @@ def compute_word_cloud_and_log(image, regularizers, station, user, session_ID, e
     elif model_type == 'gesture':
         cloud_image = current_model.compute_gesture_cloud(top_words, top_weights)
 
-    log_json_text_retrieval(station, user, session_ID, experiment, image_ID, text_ID, model_type, top_words, top_weights, logfile, date_time)
-    save_log_image(cloud_image, station, experiment, date_time, WORDCLOUD_DIR)
-    save_log_image(image, station, experiment, date_time, WEBCAM_DIR, fromarray=True)
+    #log_json_text_retrieval(station, user, session_ID, experiment, image_ID, text_ID, model_type, top_words, top_weights, logfile, date_time)
+    #save_log_image(cloud_image, station, experiment, date_time, WORDCLOUD_DIR)
+    #save_log_image(image, station, experiment, date_time, WEBCAM_DIR, fromarray=True)
 
     return cloud_image
 
