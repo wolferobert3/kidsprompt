@@ -71,7 +71,7 @@ with gr.Blocks() as demo:
                     station = gr.Dropdown(['iMac1','iMac2','iMac3','iMac4','iMac5'], value='iMac1', label="Station", interactive=True)
                     name = gr.Textbox(label="User Name", lines=1, interactive=True)
                     session = gr.Dropdown(label="Session ID", value='S2', choices=['S1','S2','S3'], interactive=False, visible=False)
-                    experiment = gr.Dropdown(label="Experiment ID", value='X2', choices=['X1','X2','X3'], interactive=False, visible=False)
+                    experiment = gr.Dropdown(label="Experiment ID", value='X8', choices=['X1','X2','X3','X8'], interactive=False, visible=False)
                     image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
                     user_image_dir = gr.Textbox(label="User Image Directory", value=NEW_IMG_DIR, interactive=False, visible=False)
 
