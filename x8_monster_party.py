@@ -1,19 +1,13 @@
 import datetime
 import gradio as gr
 
-from os import path, listdir
-
 from clip_model import ImageClassifier
-from utils import log_json_resources, upload_file_by_station
-from utils import log_json, save_log_image
+from utils import log_json_resources
+from utils import save_log_image
 
 # Define parameters
 NEW_IMG_DIR = 'user_images'
-IMG_DIR = 'example_images/pets'
 LOGFILE = 'logs/test_log.txt'
-
-# List of example images
-imgs = sorted([img for img in listdir(IMG_DIR) if img not in ['.DS_Store']], key=lambda x: int(x.split('.')[0]))
 
 # Define an image classifier
 model = ImageClassifier()
@@ -57,8 +51,7 @@ with gr.Blocks() as demo:
             with gr.Column():
 
                 image_1 = gr.Image(source='webcam', streaming=True)
-                #upload_button = gr.UploadButton("Upload an Image", file_types=["image"], file_count="single")
-                image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
+                image_id = gr.Textbox(label="Image ID", value='webcam', interactive=False, visible=False)
 
                 positive_text = gr.Textbox(label="Describe Monsters Who Can Come to the Party", interactive=True, visible=True)
                 negative_text = gr.Textbox(label="Describe Who Cannot Come to the Party", interactive=True, visible=True)
@@ -72,7 +65,7 @@ with gr.Blocks() as demo:
                     name = gr.Textbox(label="User Name", lines=1, interactive=True)
                     session = gr.Dropdown(label="Session ID", value='S2', choices=['S1','S2','S3'], interactive=False, visible=False)
                     experiment = gr.Dropdown(label="Experiment ID", value='X8', choices=['X1','X2','X3','X8'], interactive=False, visible=False)
-                    image_id = gr.Textbox(label="Image ID", value=imgs[0], interactive=False, visible=False)
+                    image_id = gr.Textbox(label="Image ID", value='webcam', interactive=False, visible=False)
                     user_image_dir = gr.Textbox(label="User Image Directory", value=NEW_IMG_DIR, interactive=False, visible=False)
 
             with gr.Column():
@@ -85,11 +78,6 @@ with gr.Blocks() as demo:
 
                 output_image = gr.Image(label="Output", value='monster_images/banner.jpg')
 
-                #with gr.Accordion(label="Images", open=False):
-                    
-                    #examples = gr.Examples([[path.join(IMG_DIR, img), img] for img in imgs if img not in ['.DS_Store']], [image_1, image_id], None, examples_per_page=3)    
-
         submission_button.click(collect_classes_and_predict, [image_1, positive_text, negative_text, decision_boundary, station, name, session, experiment, image_id, text_id], [outputs, output_image], show_progress=False)
-        #upload_button.upload(upload_file_by_station, [upload_button, user_image_dir, station, experiment], [image_1, image_id])
 
 demo.launch(share=True)
